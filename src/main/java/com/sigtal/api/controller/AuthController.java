@@ -1,8 +1,8 @@
 package com.sigtal.api.controller;
 
+import com.sigtal.api.dto.UsuarioResponse;
 import com.sigtal.api.model.Usuario;
 import com.sigtal.api.service.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,25 +19,24 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     /**
      * Endpoint para registrar un usuario.
      *
-     * Método HTTP: POST
-     * URL: /api/auth/registro
-     *
-     * @param usuario información del usuario
-     * @return usuario registrado
+     * POST /api/auth/registro
      */
     @PostMapping("/registro")
     public ResponseEntity<?> registrar(@RequestBody Usuario usuario) {
 
         try {
 
-            Usuario usuarioRegistrado =
-                    authService.registrar(usuario);
+            UsuarioResponse usuarioRegistrado =
+        authService.registrar(usuario);
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -54,29 +53,26 @@ public class AuthController {
     /**
      * Endpoint para iniciar sesión.
      *
-     * Método HTTP: POST
-     * URL: /api/auth/login
-     *
-     * @param usuario objeto que contiene usuario y contraseña
-     * @return resultado de la autenticación
+     * POST /api/auth/login
      */
     @PostMapping("/login")
     public ResponseEntity<String> login(
             @RequestBody Usuario usuario) {
 
-        String resultado = authService.login(
-                usuario.getUsuario(),
-                usuario.getPassword()
-        );
+        try {
 
-        if (resultado.equals("Autenticación satisfactoria.")) {
+            String resultado = authService.login(
+                    usuario.getUsuario(),
+                    usuario.getPassword()
+            );
 
             return ResponseEntity.ok(resultado);
 
-        }
+        } catch (RuntimeException e) {
 
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(resultado);
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(e.getMessage());
+        }
     }
 }
